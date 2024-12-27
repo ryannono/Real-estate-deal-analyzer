@@ -48,7 +48,7 @@ export const FINANCIAL_CONSTANTS = {
 };
 
 export class RealEstateDealAnalyser {
-  private formattingService = new FormattingService();
+  private readonly formattingService = new FormattingService();
 
   private mortgageService!: MortgageCalculationService;
 
