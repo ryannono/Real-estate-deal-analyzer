@@ -250,8 +250,8 @@ class ReturnCalculationService {
 
     const trueCashflows = cashflows.slice(1);
 
-    // Add gained equity to the last year of the investment period.
-    cashflows[years] += gainedEquity;
+    // Add gained equity and original downpayment to the last year of the investment period.
+    cashflows[years] += gainedEquity + this.mortgageService.getDownPayment();
 
     return {
       cashflows,
