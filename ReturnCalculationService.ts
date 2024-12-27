@@ -177,23 +177,23 @@ class ReturnCalculationService {
     year: number,
     prevMetrics = this.getInitialMetrics()
   ) => {
-    const annualRent =
-      prevMetrics.annualRent *
-      (1 + FINANCIAL_CONSTANTS.APPRECIATION_RATES.RENT);
-
-    const modifiedInput = { ...this.input, monthlyRent: annualRent / 12 };
+    const modifiedInput = { ...this.input, monthlyRent: prevMetrics.annualRent / 12 };
     const expenseService = new ExpenseCalculationService(
       modifiedInput,
       this.purchasePrice,
       this.mortgageService
     );
 
+    const cashFlow =
+      prevMetrics.annualRent -
+      expenseService.getAnnualExpenses().totalAnnualExpenses;
+    const annualRent =
+      prevMetrics.annualRent *
+      (1 + FINANCIAL_CONSTANTS.APPRECIATION_RATES.RENT);
     const principalPaid = this.calculatePrincipalReduction(
       prevMetrics.remainingBalance
     );
     const appreciation = this.calculateAppreciation(year);
-    const cashFlow =
-      annualRent - expenseService.getAnnualExpenses().totalAnnualExpenses;
 
     return {
       annualRent,
