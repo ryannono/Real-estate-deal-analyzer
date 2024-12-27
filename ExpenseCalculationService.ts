@@ -1,9 +1,10 @@
 import MortgageCalculationService from "./MortgageCalculationService";
-import { RealestateAnalysisInput, FINANCIAL_CONSTANTS } from "./RealEstateDealAnalyser";
+import { FINANCIAL_CONSTANTS } from "./RealEstateDealAnalyser";
+import { RealEstateDeal } from "./RealEstateDealBuilder";
 
 class ExpenseCalculationService {
   constructor(
-    private input: RealestateAnalysisInput,
+    private deal: RealEstateDeal,
     private purchasePrice: number,
     private mortgageService: MortgageCalculationService
   ) {}
@@ -24,7 +25,7 @@ class ExpenseCalculationService {
    * @returns Annual CapEx amount in dollars
    */
   getAnnualCapEx = (): number => {
-    return this.input.monthlyHoaDues > 0
+    return this.deal.monthlyHoaDues > 0
       ? 0
       : this.purchasePrice * FINANCIAL_CONSTANTS.CAPEX_RATE;
   };
@@ -35,7 +36,7 @@ class ExpenseCalculationService {
    * @returns Annual maintenance costs in dollars
    */
   getAnnualMaintenance = (): number => {
-    const rate = this.input.newConstruction
+    const rate = this.deal.newConstruction
       ? FINANCIAL_CONSTANTS.MAINTENANCE_RATES.NEW_CONSTRUCTION
       : FINANCIAL_CONSTANTS.MAINTENANCE_RATES.EXISTING_CONSTRUCTION;
     return this.purchasePrice * rate;
@@ -47,7 +48,7 @@ class ExpenseCalculationService {
    * @returns Annual insurance cost in dollars
    */
   getAnnualInsurance = (): number => {
-    return this.input.monthlyHoaDues
+    return this.deal.monthlyHoaDues
       ? FINANCIAL_CONSTANTS.CONDO_INSURANCE_RATE
       : this.purchasePrice * FINANCIAL_CONSTANTS.BASE_INSURANCE_RATE;
   };
@@ -58,14 +59,14 @@ class ExpenseCalculationService {
    * @returns Annual property management cost in dollars
    */
   getAnnualManagement = (): number => {
-    if (!this.input.needsPropertyManagement) return 0;
+    if (!this.deal.needsPropertyManagement) return 0;
 
     const { SINGLE_FAMILY, MULTI_FAMILY } =
       FINANCIAL_CONSTANTS.MANAGEMENT_RATES;
     return (
-      this.input.monthlyRent *
+      this.deal.monthlyRent *
       12 *
-      (this.input.unitCount > 4 ? MULTI_FAMILY : SINGLE_FAMILY)
+      (this.deal.unitCount > 4 ? MULTI_FAMILY : SINGLE_FAMILY)
     );
   };
 
@@ -74,8 +75,8 @@ class ExpenseCalculationService {
    * @returns Annual utility cost in dollars
    */
   getAnnualUtilities = (): number => {
-    if (!this.input.landlordPaidUtilities) return 0;
-    return this.input.unitCount * FINANCIAL_CONSTANTS.UNIT_UTILITY_COST * 12;
+    if (!this.deal.landlordPaidUtilities) return 0;
+    return this.deal.unitCount * FINANCIAL_CONSTANTS.UNIT_UTILITY_COST * 12;
   };
 
   /**
@@ -86,16 +87,16 @@ class ExpenseCalculationService {
     const annualExpenses = {
       annualMortgagePayment:
         this.mortgageService.getMonthlyMortgagePayment() * 12,
-      annualHoaDues: this.input.monthlyHoaDues * 12,
+      annualHoaDues: this.deal.monthlyHoaDues * 12,
       annualUtilities: this.getAnnualUtilities(),
       annualPropertyManagement: this.getAnnualManagement(),
       annualCapEx: this.getAnnualCapEx(),
       annualMaintenanceCosts: this.getAnnualMaintenance(),
       annualPropertyTax:
-        this.purchasePrice * (this.input.propertyTaxRate / 100),
+        this.purchasePrice * (this.deal.propertyTaxRate / 100),
       annualPropertyInsurance: this.getAnnualInsurance(),
       annualVacancyCosts:
-        this.input.monthlyRent * 12 * (this.input.vacancyRate / 100),
+        this.deal.monthlyRent * 12 * (this.deal.vacancyRate / 100),
     };
 
     return {

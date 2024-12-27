@@ -1,8 +1,9 @@
-import { RealestateAnalysisInput, FINANCIAL_CONSTANTS } from "./RealEstateDealAnalyser";
+import { FINANCIAL_CONSTANTS } from "./RealEstateDealAnalyser";
+import { RealEstateDeal } from "./RealEstateDealBuilder";
 
 class MortgageCalculationService {
   constructor(
-    private input: RealestateAnalysisInput,
+    private deal: RealEstateDeal,
     private purchasePrice: number
   ) {}
 
@@ -11,7 +12,7 @@ class MortgageCalculationService {
    * @returns Down payment amount in dollars
    */
   getDownPayment = (): number => {
-    return this.purchasePrice * (this.input.downpaymentPercentage / 100);
+    return this.purchasePrice * (this.deal.downpaymentPercentage / 100);
   };
 
   /**
@@ -19,7 +20,7 @@ class MortgageCalculationService {
    * @returns Loan amount in dollars
    */
   getLoanAmount = (): number => {
-    const closingEquity = this.input.closingEquity || 0;
+    const closingEquity = this.deal.closingEquity || 0;
     return this.purchasePrice - this.getDownPayment() - closingEquity;
   };
 
@@ -29,11 +30,11 @@ class MortgageCalculationService {
    * @returns Monthly mortgage payment in dollars
    */
   getMonthlyMortgagePayment = (): number => {
-    const n = this.input.mortgageAmortization * 12;
+    const n = this.deal.mortgageAmortization * 12;
     const monthlyMortgageInterestRate =
-      this.input.annualMortgageInterestRate / 100 / 12;
+      this.deal.annualMortgageInterestRate / 100 / 12;
     const PMI =
-      this.input.downpaymentPercentage >= 20
+      this.deal.downpaymentPercentage >= 20
         ? 0
         : (this.purchasePrice * FINANCIAL_CONSTANTS.PMI_RATE) / 12;
 

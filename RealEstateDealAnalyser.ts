@@ -2,22 +2,7 @@ import ExpenseCalculationService from "./ExpenseCalculationService";
 import FormattingService from "./FormattingService";
 import MortgageCalculationService from "./MortgageCalculationService";
 import ReturnCalculationService from "./ReturnCalculationService";
-
-export interface RealestateAnalysisInput {
-  salePrice: number;
-  downpaymentPercentage: number;
-  annualMortgageInterestRate: number;
-  mortgageAmortization: number;
-  propertyTaxRate: number;
-  monthlyHoaDues: number;
-  vacancyRate: number;
-  monthlyRent: number;
-  landlordPaidUtilities: boolean;
-  needsPropertyManagement: boolean;
-  unitCount: number;
-  newConstruction: boolean;
-  closingEquity?: number;
-}
+import { RealEstateDeal, RealEstateDealBuilder } from './RealEstateDealBuilder';
 
 export const FINANCIAL_CONSTANTS = {
   /** % of purchase price */
@@ -63,52 +48,48 @@ export const FINANCIAL_CONSTANTS = {
 };
 
 export class RealEstateDealAnalyser {
+  private formattingService = new FormattingService();
+
   private mortgageService!: MortgageCalculationService;
 
   private expenseService!: ExpenseCalculationService;
 
   private returnService!: ReturnCalculationService;
 
-  private formattingService!: FormattingService;
-
   private purchasePrice: number;
 
-  constructor(private readonly input: RealestateAnalysisInput) {
-    this.purchasePrice = input.salePrice;
-    this.initializeServices();
+  constructor(private readonly deal: RealEstateDeal) {
+    this.purchasePrice = deal.salePrice;
+    this.analyzeDeal();
   }
 
   /**
-   * Initializes the required services for the real estate deal analysis.
+   * Analyzes the real estate deal by initializing and calculating the required services.
    *
    * @remarks
-   * This method creates instances of the following services:
-   * - MortgageCalculationService
-   * - ExpenseCalculationService
-   * - ReturnCalculationService
-   * - FormattingService
+   * This function initializes the mortgage, expense, and return calculation services using the provided
+   * real estate deal and purchase price. It then returns the instance of the RealEstateDealAnalyser class.
    *
-   * The services are used to perform calculations related to mortgage, expenses, returns, and formatting.
-   *
-   * @returns {void}
+   * @returns {this} - Returns the instance of the RealEstateDealAnalyser class with initialized services.
    */
-  private initializeServices(): void {
+  private analyzeDeal(): this {
     this.mortgageService = new MortgageCalculationService(
-      this.input,
+      this.deal,
       this.purchasePrice
     );
     this.expenseService = new ExpenseCalculationService(
-      this.input,
+      this.deal,
       this.purchasePrice,
       this.mortgageService
     );
     this.returnService = new ReturnCalculationService(
-      this.input,
+      this.deal,
       this.purchasePrice,
       this.mortgageService,
       this.expenseService
     );
-    this.formattingService = new FormattingService();
+
+    return this;
   }
 
   /**
@@ -126,6 +107,8 @@ export class RealEstateDealAnalyser {
    * deal criterion are met.
    */
   private checkDealCriteria(): 'max' | 'low' | 'high' {
+    this.analyzeDeal();
+
     const { avgYield } = this.returnService.getReturns();
     const { avgCashflow } = this.returnService.getCashflows();
     const avgCOCROI = this.returnService.getAvgCOCROI();
@@ -133,7 +116,7 @@ export class RealEstateDealAnalyser {
     const minimumROI = FINANCIAL_CONSTANTS.MINIMUM_ROI;
     const minimumCashflow =
       FINANCIAL_CONSTANTS.MINIMUM_MONTHLY_CASHFLOW_PER_DOOR *
-      this.input.unitCount *
+      this.deal.unitCount *
       12;
     const minimumCOCROI = FINANCIAL_CONSTANTS.MINIMUM_COC_ROI;
 
@@ -162,10 +145,8 @@ export class RealEstateDealAnalyser {
   adjustToMaxPurchasePrice(): this {
     this.purchasePrice = 1;
 
-    this.initializeServices();
     while (this.checkDealCriteria() !== 'high') {
       this.purchasePrice *= 2;
-      this.initializeServices();
     }
 
     let left = 0;
@@ -174,8 +155,6 @@ export class RealEstateDealAnalyser {
     while (left <= right) {
       const middle = Math.floor((left + right) / 2);
       this.purchasePrice = middle;
-
-      this.initializeServices();
 
       const dealAnalysisResult = this.checkDealCriteria();
 
@@ -189,8 +168,8 @@ export class RealEstateDealAnalyser {
     }
 
     this.purchasePrice = right;
-    this.initializeServices();
-    return this;
+
+    return this.analyzeDeal();
   }
 
   /**
@@ -204,8 +183,8 @@ export class RealEstateDealAnalyser {
    * @returns {void} - The function does not return any value.
    */
   resetPurchasePriceAdjustment = (): void => {
-    this.purchasePrice = this.input.salePrice;
-    this.initializeServices();
+    this.purchasePrice = this.deal.salePrice;
+    this.analyzeDeal();
   };
 
   /**
@@ -217,7 +196,7 @@ export class RealEstateDealAnalyser {
     const timeHorizon = FINANCIAL_CONSTANTS.INVESTMENT_YEAR_TIME_HORIZON;
     const { formatCurrency, formatPercentage, generateMarkdownReport } =
       this.formattingService;
-    const isPurchasePriceAdjusted = this.purchasePrice !== this.input.salePrice;
+    const isPurchasePriceAdjusted = this.purchasePrice !== this.deal.salePrice;
 
     // expense
     const { totalAnnualExpenses, ...annualExpenseItems } =
@@ -242,7 +221,7 @@ export class RealEstateDealAnalyser {
         ? `Maximum Purchase Price Analysis @ ${formatCurrency(
             this.purchasePrice
           )}`
-        : `Sale Price Analysis @ ${formatCurrency(this.input.salePrice)}`,
+        : `Sale Price Analysis @ ${formatCurrency(this.deal.salePrice)}`,
 
       sections: [
         {
@@ -264,8 +243,8 @@ export class RealEstateDealAnalyser {
           title: `Avg Cashflow: ${formatCurrency(avgCashflow)}`,
           data: {
             annualRent: {
-              value: this.input.monthlyRent * 12,
-              note: `from ${this.input.unitCount} unit(s)`,
+              value: this.deal.monthlyRent * 12,
+              note: `from ${this.deal.unitCount} unit(s)`,
             },
             annualExpenses: {
               value:
@@ -330,21 +309,21 @@ export class RealEstateDealAnalyser {
   };
 }
 
-let inputs: RealestateAnalysisInput = {
-  salePrice: 372000,
-  downpaymentPercentage: 20,
-  annualMortgageInterestRate: 4.92,
-  mortgageAmortization: 25,
-  propertyTaxRate: 1,
-  monthlyHoaDues: 0,
-  vacancyRate: 2.6,
-  monthlyRent: 4400,
-  landlordPaidUtilities: true,
-  needsPropertyManagement: false,
-  unitCount: 2,
-  newConstruction: false,
-};
+let deal = new RealEstateDealBuilder()
+  .setSalePrice(372000)
+  .setDownpaymentPercentage(20)
+  .setAnnualMortgageInterestRate(4.39)
+  .setMortgageAmortization(25)
+  .setPropertyTaxRate(1)
+  .setMonthlyHoaDues(0)
+  .setVacancyRate(2.3)
+  .setMonthlyRent(4400)
+  .setLandlordPaidUtilities(true)
+  .setNeedsPropertyManagement(false)
+  .setUnitCount(2)
+  .setNewConstruction(false)
+  .build();
 
-const analyser = new RealEstateDealAnalyser(inputs).adjustToMaxPurchasePrice();
+const analyser = new RealEstateDealAnalyser(deal).adjustToMaxPurchasePrice();
 
 console.log(analyser.getFullResultsMarkdown());

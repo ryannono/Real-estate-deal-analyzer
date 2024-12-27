@@ -1,13 +1,13 @@
 import {
-  RealestateAnalysisInput,
   FINANCIAL_CONSTANTS,
 } from './RealEstateDealAnalyser';
 import ExpenseCalculationService from './ExpenseCalculationService';
 import MortgageCalculationService from './MortgageCalculationService';
+import { RealEstateDeal } from './RealEstateDealBuilder';
 
 class ReturnCalculationService {
   constructor(
-    private input: RealestateAnalysisInput,
+    private deal: RealEstateDeal,
     private purchasePrice: number,
     private mortgageService: MortgageCalculationService,
     private expenseService: ExpenseCalculationService
@@ -17,12 +17,12 @@ class ReturnCalculationService {
    * Calculates the average value of a numeric array.
    *
    * @remarks
-   * This function takes an array of numbers as input and returns their average value.
-   * If the input array is empty, the function returns 0.
+   * This function takes an array of numbers as deal and returns their average value.
+   * If the deal array is empty, the function returns 0.
    *
-   * @param arr - The input array of numbers.
+   * @param arr - The deal array of numbers.
    *
-   * @returns The average value of the input array.
+   * @returns The average value of the deal array.
    */
   private static getArrAvg = (arr: number[]): number => {
     return arr.reduce((acc, v) => acc + v, 0) / arr.length;
@@ -86,7 +86,7 @@ class ReturnCalculationService {
    */
   private getInitialMetrics() {
     return {
-      annualRent: this.input.monthlyRent * 12,
+      annualRent: this.deal.monthlyRent * 12,
       cashFlow: 0,
       principalPaid: 0,
       appreciation: 0,
@@ -108,7 +108,7 @@ class ReturnCalculationService {
     remainingLoanBalance = this.mortgageService.getLoanAmount()
   ): number => {
     const annualInterestPayment =
-      remainingLoanBalance * (this.input.annualMortgageInterestRate / 100);
+      remainingLoanBalance * (this.deal.annualMortgageInterestRate / 100);
 
     return (
       this.mortgageService.getMonthlyMortgagePayment() * 12 -
@@ -133,8 +133,8 @@ class ReturnCalculationService {
   private calculateAppreciation(appreciationYear = 1) {
     if (appreciationYear < 1) return 0;
 
-    if (this.input.unitCount > 1) {
-      let newRent = this.input.monthlyRent;
+    if (this.deal.unitCount > 1) {
+      let newRent = this.deal.monthlyRent;
       const rentIncreaseRate = 1 + FINANCIAL_CONSTANTS.APPRECIATION_RATES.RENT;
 
       for (let year = 1; year <= appreciationYear; year++) {
@@ -143,7 +143,7 @@ class ReturnCalculationService {
 
       const prevRent = newRent / rentIncreaseRate;
       const prevValue =
-        (prevRent * this.purchasePrice) / this.input.monthlyRent;
+        (prevRent * this.purchasePrice) / this.deal.monthlyRent;
       return (newRent * prevValue) / prevRent - prevValue;
     }
 
@@ -177,9 +177,9 @@ class ReturnCalculationService {
     year: number,
     prevMetrics = this.getInitialMetrics()
   ) => {
-    const modifiedInput = { ...this.input, monthlyRent: prevMetrics.annualRent / 12 };
+    const modifiedDeal = { ...this.deal, monthlyRent: prevMetrics.annualRent / 12 };
     const expenseService = new ExpenseCalculationService(
-      modifiedInput,
+      modifiedDeal,
       this.purchasePrice,
       this.mortgageService
     );
