@@ -22,9 +22,6 @@ The **Real Estate Deal Analyzer** is a TypeScript-based tool designed to evaluat
 
 ### 2. ReturnCalculationService.ts
 - **Purpose**: Focuses on return metrics like appreciation and ROI.
-- **Key Methods**:
-  - `getInitialMetrics`: Initializes financial calculations.
-  - `calculateAppreciation`: Handles appreciation projections.
 - **Key Class**: `ReturnCalculationService`
 
 ### 3. ExpenseCalculationService.ts
