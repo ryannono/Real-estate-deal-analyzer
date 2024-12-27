@@ -190,11 +190,17 @@ class RealEstateDealAnalyser {
     }
     /**
      * Checks the deal criteria based on average yield, average cashflow, and average COC ROI.
-     * Returns 'max' if all criteria are met and the average cashflow equals the minimum cashflow,
-     * 'good' if all criteria are met but the average cashflow is higher than the minimum cashflow,
-     * and 'bad' if any of the criteria are not met.
      *
-     * @returns {'max' | 'good' | 'bad'} - The result of the deal criteria check.
+     * @remarks
+     * This function calculates the average yield, average cashflow, and average COC ROI using the
+     * services provided. It compares these values with the minimum criteria defined in the
+     * `FINANCIAL_CONSTANTS` object.
+     *
+     * @returns {'max' | 'low' | 'high'} - Returns 'max' if purchase price is at
+     * the highest allowable value, 'low' if purchase price is lower than the
+     * highest allowable value, and high if the purchase price is past the highest
+     * allowable value; where allowable value is a purchase price where all minimu
+     * deal criterion are met.
      */
     checkDealCriteria() {
         const { avgYield } = this.returnService.getReturns();
@@ -208,24 +214,25 @@ class RealEstateDealAnalyser {
         if (avgYield >= minimumROI &&
             avgCashflow >= minimumCashflow &&
             avgCOCROI >= minimumCOCROI) {
-            return Math.floor(avgCashflow) === minimumCashflow ? 'max' : 'good';
+            return Math.floor(avgCashflow) === minimumCashflow ? 'max' : 'low';
         }
-        return 'bad';
+        return 'high';
     }
     /**
-     * Adjusts the purchase price to the maximum value that still meets the deal criteria.
-     * The method uses a binary search algorithm to find the maximum purchase price.
+     * Adjusts the purchase price to the maximum allowable value while maintaining the minimum deal criteria.
      *
-     * @remarks
-     * The method initializes the purchase price to 1 and repeatedly doubles it until the deal criteria are not met.
-     * Then, it performs a binary search to find the maximum purchase price that still meets the criteria.
+     * This function uses a binary search algorithm to find the maximum purchase price that satisfies the minimum
+     * average yield, average cashflow, and average COC ROI criteria. It starts with a purchase price of 1 and doubles
+     * the price until the deal criteria are no longer met to find the upper
+     * bound. Then, it performs a binary search to find the exact maximum price
+     * between 0 and the upper bound.
      *
-     * @returns {this} - Returns the instance of the RealEstateDealAnalyser for method chaining.
+     * @returns {this} - Returns the instance of the RealEstateDealAnalyser class with the adjusted purchase price.
      */
     adjustToMaxPurchasePrice() {
         this.purchasePrice = 1;
         this.initializeServices();
-        while (this.checkDealCriteria() !== 'bad') {
+        while (this.checkDealCriteria() !== 'high') {
             this.purchasePrice *= 2;
             this.initializeServices();
         }
@@ -236,13 +243,14 @@ class RealEstateDealAnalyser {
             this.purchasePrice = middle;
             this.initializeServices();
             const dealAnalysisResult = this.checkDealCriteria();
-            if (dealAnalysisResult === 'bad') {
+            if (dealAnalysisResult === 'max') {
+                break;
+            }
+            else if (dealAnalysisResult === 'high') {
                 right = middle - 1;
             }
             else {
                 left = middle + 1;
-                if (dealAnalysisResult === 'max')
-                    break;
             }
         }
         this.purchasePrice = right;

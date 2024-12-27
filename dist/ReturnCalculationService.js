@@ -41,13 +41,14 @@ class ReturnCalculationService {
          * - totalAppreciation: The total appreciation over the investment period.
          */
         this.calculateYearlyMetrics = (year, prevMetrics = this.getInitialMetrics()) => {
+            const modifiedInput = Object.assign(Object.assign({}, this.input), { monthlyRent: prevMetrics.annualRent / 12 });
+            const expenseService = new ExpenseCalculationService_1.default(modifiedInput, this.purchasePrice, this.mortgageService);
+            const cashFlow = prevMetrics.annualRent -
+                expenseService.getAnnualExpenses().totalAnnualExpenses;
             const annualRent = prevMetrics.annualRent *
                 (1 + RealEstateDealAnalyser_1.FINANCIAL_CONSTANTS.APPRECIATION_RATES.RENT);
-            const modifiedInput = Object.assign(Object.assign({}, this.input), { monthlyRent: annualRent / 12 });
-            const expenseService = new ExpenseCalculationService_1.default(modifiedInput, this.purchasePrice, this.mortgageService);
             const principalPaid = this.calculatePrincipalReduction(prevMetrics.remainingBalance);
             const appreciation = this.calculateAppreciation(year);
-            const cashFlow = annualRent - expenseService.getAnnualExpenses().totalAnnualExpenses;
             return {
                 annualRent,
                 cashFlow,
