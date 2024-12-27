@@ -7,10 +7,10 @@ import { RealEstateDeal } from './RealEstateDealBuilder';
 
 class ReturnCalculationService {
   constructor(
-    private deal: RealEstateDeal,
-    private purchasePrice: number,
-    private mortgageService: MortgageCalculationService,
-    private expenseService: ExpenseCalculationService
+    private readonly deal: RealEstateDeal,
+    private readonly purchasePrice: number,
+    private readonly mortgageService: MortgageCalculationService,
+    private readonly expenseService: ExpenseCalculationService
   ) {}
 
   /**

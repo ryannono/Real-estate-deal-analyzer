@@ -4,9 +4,9 @@ import { RealEstateDeal } from "./RealEstateDealBuilder";
 
 class ExpenseCalculationService {
   constructor(
-    private deal: RealEstateDeal,
-    private purchasePrice: number,
-    private mortgageService: MortgageCalculationService
+    private readonly deal: RealEstateDeal,
+    private readonly purchasePrice: number,
+    private readonly mortgageService: MortgageCalculationService
   ) {}
 
   /**

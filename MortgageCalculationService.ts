@@ -3,8 +3,8 @@ import { RealEstateDeal } from "./RealEstateDealBuilder";
 
 class MortgageCalculationService {
   constructor(
-    private deal: RealEstateDeal,
-    private purchasePrice: number
+    private readonly deal: RealEstateDeal,
+    private readonly purchasePrice: number
   ) {}
 
   /**
