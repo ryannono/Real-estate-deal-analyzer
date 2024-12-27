@@ -42,11 +42,7 @@ The **Real Estate Deal Analyzer** is a TypeScript-based tool designed to evaluat
    ```bash
    git clone https://github.com/ryannono/Real-estate-deal-analyzer.git
    ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run TypeScript files:
+2. Run TypeScript files:
    ```bash
    npx ts-node ./RealEstateDealAnalyser.ts
    ```
