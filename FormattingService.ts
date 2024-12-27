@@ -293,7 +293,9 @@ class FormattingService {
 
       return output.concat(sections).join('\n');
     } catch (error) {
-      throw new FormattingError(`Failed to generate report: ${(error as Error).message}`);
+      throw new FormattingError(
+        `Failed to generate report: ${(error as Error).message}`
+      );
     }
   };
 
