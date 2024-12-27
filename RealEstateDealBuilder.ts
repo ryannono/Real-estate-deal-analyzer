@@ -43,6 +43,7 @@ export class RealEstateDealBuilder {
       ...this.deal,
       ...partialDeal
     };
+    return this;
   }
 
   setSalePrice(price: number): RealEstateDealBuilder {
